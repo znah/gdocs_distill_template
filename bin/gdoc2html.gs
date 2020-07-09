@@ -33,7 +33,7 @@ output (https://github.com/USERNAME/REPO-NAME/blob/master/PATH/TO/OUTPUT.html). 
       if (!htmlMatch.test(input)) { throw new Error("Unrecognized repository URL."); };
       input = input.replace(htmlMatch, "https://api.github.com/repos/$1/$2/contents/$4.html");
     } else {
-      var canonMatch = /https:\/\/github.com\/(.*)\/(.*)\//;
+      var canonMatch = /https:\/\/github.com\/(.*?)\/(.*?)\/?$/;
       if (!canonMatch.test(input)) { throw new Error("Unrecognized repository URL."); };
       input = input.replace(canonMatch, "https://api.github.com/repos/$1/$2/contents/article.html");
     }
