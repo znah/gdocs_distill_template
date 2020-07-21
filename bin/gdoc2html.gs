@@ -1,14 +1,12 @@
-var scriptProps = PropertiesService.getScriptProperties();
 var userProps = PropertiesService.getUserProperties(); 
 var ui = DocumentApp.getUi();
+var body = DocumentApp.getActiveDocument().getBody();
 
 function onOpen() {
   DocumentApp.getUi()
       .createMenu('HTML Export')
-      .addItem('Set GitHub Repository URL', 'setGitUrl')
       .addItem('Set GitHub API key', 'setApiKey')
       .addItem('Run Export', 'ConvertGoogleDocToCleanHtml')
-      .addItem('Set Colab URL', 'setColabUrl')
       .addToUi();
 }
 
@@ -21,44 +19,48 @@ function setApiKey(){
   };
 };
 
-function setGitUrl(){
-  var response = ui.prompt("\
-Please paste the link to the GitHub repository. This should be either the canonical URL to the root page of the repository \
-in the browser (https://github.com/USERNAME/REPO-NAME/) or a link to the browser address of the '.html' to \
-output (https://github.com/USERNAME/REPO-NAME/blob/master/PATH/TO/OUTPUT.html). Other formats will not be accepted.");
-  if (response.getSelectedButton() == ui.Button.OK) {
-    var input = response.getResponseText();
-    if (input.endsWith(".html")) {
-      var htmlMatch = /https:\/\/github.com\/(.*)\/(.*)\/blob\/(.*)\/(.*).html/;
-      if (!htmlMatch.test(input)) { throw new Error("Unrecognized repository URL."); };
-      input = input.replace(htmlMatch, "https://api.github.com/repos/$1/$2/contents/$4.html");
-    } else {
-      var canonMatch = /https:\/\/github.com\/(.*?)\/(.*?)\/?$/;
-      if (!canonMatch.test(input)) { throw new Error("Unrecognized repository URL."); };
-      input = input.replace(canonMatch, "https://api.github.com/repos/$1/$2/contents/article.html");
-    }
-    scriptProps.setProperty('giturl', input);
+function checkAndParseGitURL(consts){
+  if (!("github_repo" in consts)) { throw new Error("Please add 'github_repo' to the consts table") };
+  let github_repo = consts["github_repo"];
+  if (github_repo.endsWith(".html")) {
+    var htmlMatch = /https:\/\/github.com\/(.*)\/(.*)\/blob\/(.*)\/(.*).html/;
+    if (!htmlMatch.test(github_repo)) { throw new Error("Unrecognized repository URL."); };
+    github_repo = github_repo.replace(htmlMatch, "https://api.github.com/repos/$1/$2/contents/$4.html");
   } else {
-    throw new Error("No API path given, aborting.");
+    var canonMatch = /https:\/\/github.com\/(.*?)\/(.*?)\/?$/;
+    if (!canonMatch.test(github_repo)) { throw new Error("Unrecognized repository URL."); };
+    github_repo = github_repo.replace(canonMatch, "https://api.github.com/repos/$1/$2/contents/article.html");
   }
+  consts["github_repo"] = github_repo;
+  return consts;
 };
 
-function setColabUrl(){
-  var response = ui.prompt('Please enter the link to a hosted notebook on Google Colab (COLAB_URL ending in .ipynb). \
-Descriptions of images including colab(XYZ) will insert a link directly to section XYZ of the colab (i.e. COLAB_URL#scrollTo=XYZ).');
-  if (response.getSelectedButton() == ui.Button.OK) {
-    userProps.setProperty('colaburl', response.getResponseText());
-  } else {
-    throw new Error("No URL entered..");
+function parseConstants() {
+  let tables = body.getTables();
+  // The first table should be our constants. 
+  if (tables.length == 0) {
+    throw new Error("Constants table is not available or has been removed.");
   };
-};
+  let table = tables[0];
+  var consts = {};
+  for (let i=0; i < table.getNumRows(); i++) {
+    let row = table.getRow(i);
+    if (row.getNumCells() != 2){
+      throw new Error("All rows in constants table should have two columns - key/value.");
+    }
+    consts[row.getCell(0).getText()] = row.getCell(1).getText();
+  }
+  return consts;
+}  
+
 
 function ConvertGoogleDocToCleanHtml() {
-  const body = DocumentApp.getActiveDocument().getBody();
+
   var images = [];
   var listCounters = {};
   var output = [];
   let foundStart = false;
+  let consts = parseConstants();
   for (let i=0; i<body.getNumChildren(); ++i) {
     const p = body.getChild(i);
     const text = p.getText().trim();
@@ -68,18 +70,18 @@ function ConvertGoogleDocToCleanHtml() {
     if ((text[0] == '<' && text[text.length-1] == '>') || text.slice(0, 2) == "%%") {
       output.push(text);
     } else {
-      output.push(processItem(p, listCounters, images));
+      output.push(processItem(p, listCounters, images, consts));
     }
   }
   var html = output.join('\n');
   var htmlb64 = Utilities.base64Encode(html, Utilities.Charset.UTF_8);
   
   //Check for saved GitHub url and token, else prompt for it.  
-  if (scriptProps.getProperty("giturl") == null) { setGitUrl(); };
+  consts = checkAndParseGitURL(consts);
   if (userProps.getProperty("apikey") == null){ setApiKey(); };
   
   try {
-    var response = UrlFetchApp.fetch(scriptProps.getProperty("giturl"), {
+    var response = UrlFetchApp.fetch(consts["github_repo"], {
       'method' : 'GET',
       'headers': {
         'Authorization': 'token ' + userProps.getProperty("apikey") //'
@@ -91,7 +93,7 @@ function ConvertGoogleDocToCleanHtml() {
   var articlefile = JSON.parse(response.getContentText());
   
   try {
-    UrlFetchApp.fetch(scriptProps.getProperty("giturl"), {
+    UrlFetchApp.fetch(consts["github_repo"], {
       'method' : 'PUT',
       'payload' : JSON.stringify({
         "message": "auto update article.html",
@@ -109,7 +111,7 @@ function ConvertGoogleDocToCleanHtml() {
   } catch (e) {
     throw new Error('Failed to write to GitHub repository with error: ' + e + '. Please make sure you have write permission.');
   }
-  DocumentApp.getUi().alert('Successfully expored article HTML to GitHub');
+  DocumentApp.getUi().alert('Successfully exported article HTML to GitHub');
 }
 
 
@@ -120,7 +122,7 @@ function dumpAttributes(atts) {
   }
 }
 
-function processItem(item, listCounters, images) {
+function processItem(item, listCounters, images, consts) {
   var output = [];
   var prefix = "", suffix = "";
   if (item.getType() == DocumentApp.ElementType.PARAGRAPH) {
@@ -162,11 +164,11 @@ function processItem(item, listCounters, images) {
   }
   else if (item.getType() == DocumentApp.ElementType.INLINE_IMAGE)
   {
-    processImage(item, images, output);
+    processImage(item, images, output, consts);
   }
   else if (item.getType() == DocumentApp.ElementType.INLINE_DRAWING)
   {
-    processImage(item, images, output);
+    processImage(item, images, output, consts);
   } else if (item.getType() == DocumentApp.ElementType.FOOTNOTE) {
     const text = processString(item.getFootnoteContents().getText());
     output.push(`<d-footnote>${text}</d-footnote>`)
@@ -187,7 +189,7 @@ function processItem(item, listCounters, images) {
       // Walk through all the child elements of the doc.
       for (var i = 0; i < numChildren; i++) {
         var child = item.getChild(i);
-        output.push(processItem(child, listCounters, images));
+        output.push(processItem(child, listCounters, images, consts));
       }
     }
 
@@ -237,13 +239,14 @@ function processText(item, output) {
   }
 }
 
-function processImage(item, images, output) {
+function processImage(item, images, output, consts) {
   var description = item.getAltDescription();
   if (description) {
-    if (scriptProps.getProperty("colaburl")){ 
-      var colablink = "<a href=\"" + scriptProps.getProperty("colaburl") + "#scrollTo=$1\" class=\"colab-root\">Reproduce in a <span class=\"colab-span\">Notebook</span></a>";
+    //Descriptions of images including colab(XYZ) will insert a link directly to section XYZ of the colab (i.e. COLAB_URL#scrollTo=XYZ).
+    if ("colab" in consts) { 
+      var colablink = "<a href=\"" + consts['colab'] + "#scrollTo=$1\" class=\"colab-root\">Reproduce in a <span class=\"colab-span\">Notebook</span></a>";
       description = description.replace(/colab\(([a-zA-Z0-9_-]+)\)/gm, colablink);
-    }
+    };
     output.push(description);
   }
 }
