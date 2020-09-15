@@ -1,5 +1,5 @@
 destination: public
-source: jekyll_public
+includes: .
 
 # Site settings
 # title: Your awesome title
