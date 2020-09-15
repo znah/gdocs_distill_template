@@ -1,5 +1,5 @@
 destination: public
-includes: .
+includes_dir: .
 
 # Site settings
 # title: Your awesome title
