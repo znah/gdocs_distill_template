@@ -10,24 +10,18 @@
 
   <d-front-matter>
     <script type="text/json">{
-      "title": "Self-Classifying MNIST",
-      "description": "Training an end-to-end differentiable, self-organising cellular automata for classifying MNIST digits.",
+      "title": "A Minimalist Google Docs workflow for Distill.pub",
+      "description": "A simple build system for Distill.",
       "authors": [
-        {
-          "author": "Ettore Randazzo",
-          "authorURL": "https://oteret.github.io/",
-          "affiliation": "Google",
-          "affiliationURL": "https://ai.google/"
-        },
-        {
-          "author": "Alexander Mordvintsev",
-          "authorURL": "https://znah.net/",
-          "affiliation": "Google",
-          "affiliationURL": "https://ai.google/"
-        },
         {
           "author": "Eyvind Niklasson",
           "authorURL": "https://eyvind.me/",
+          "affiliation": "Google",
+          "affiliationURL": "https://ai.google/"
+        },
+        {
+          "author": "Alexander Mordvinstev",
+          "authorURL": "https://znah.net/",
           "affiliation": "Google",
           "affiliationURL": "https://ai.google/"
         }
@@ -204,23 +198,16 @@
     }
 
   </style>
-  <script>
-  // hack to edit font size in code snippets. guaranteed a better way to do 
-  // this, but I'm not a webdev
-  window.onload = function() {
-    setTimeout(() => { document.querySelectorAll("d-code").forEach(function(e) {e.shadowRoot.querySelector('#code-container').style.fontSize = "0.7em"}); }, 3000);
-  }
-  </script>
   <d-title>
-    <h1>Self-Classifying MNIST digits</h1>
-    <p>Neural Cellular Automata Model of Distributed Coordination</p>
+    <h1>A Minimalist Google Docs workflow for Distill.pub</h1>
+    <p>A Minimalist Google Docs workflow for Distill.pub</p>
 
 </d-title>
 
 <d-byline></d-byline>
 
 
-%% article.html
+{% include article.html %}
 
   <d-bibliography src="bibliography.bib"></d-bibliography>
 </body>
