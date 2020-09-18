@@ -1,1 +1,3 @@
+destination: public
+keep_files: ['export.png']
 includes_dir: .
