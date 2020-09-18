@@ -1,6 +1,1 @@
 includes_dir: .
-defaults:
-  - scope:
-      path: "public/export.png"
-    values:
-      permalink: "/export"
