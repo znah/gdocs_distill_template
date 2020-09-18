@@ -3,4 +3,4 @@ defaults:
   - scope:
       path: "public/export.png"
     values:
-      permalink: "export.png"
+      permalink: "/export.png"
