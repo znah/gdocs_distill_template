@@ -1,3 +1,3 @@
 includes_dir: .
 destination: public
-keep_files: [.]
+keep_files: [/]
