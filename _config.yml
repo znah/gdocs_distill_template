@@ -1,1 +1,7 @@
 includes_dir: .
+defaults:
+  -
+    scope:
+      path: "public/*"
+    values:
+      permalink: "/../:path/:basename"
