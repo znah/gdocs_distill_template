@@ -4,4 +4,4 @@ defaults:
     scope:
       path: "public"
     values:
-      permalink: "/../:path/:basename"
+      permalink: "/:basename"
