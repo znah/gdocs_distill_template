@@ -1,3 +1,6 @@
-destination: public
-keep_files: ['export.png']
 includes_dir: .
+defaults:
+  - scope:
+      path: "public/export.png"
+    values:
+      permalink: "export.png"
