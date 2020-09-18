@@ -1,4 +1,4 @@
 includes_dir: .
-exclude: ["public"]
-destination: "./public"
-keep_files: ["./export.png"]
+destination: public
+exclude: [public]
+keep_files: [export.png]
