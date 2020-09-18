@@ -1,7 +1,3 @@
 includes_dir: .
-defaults:
-  -
-    scope:
-      path: "public"
-    values:
-      permalink: "/:basename:output_ext"
+destination: public
+keep_files: *
