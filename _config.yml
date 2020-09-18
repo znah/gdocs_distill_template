@@ -1,4 +1,1 @@
 includes_dir: .
-destination: public
-exclude: [public]
-keep_files: [export.png, 'bibliography.bib']
