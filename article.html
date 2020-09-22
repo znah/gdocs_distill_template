@@ -1,15 +1,22 @@
 <d-article>
 <h1>A Minimalist Google Docs workflow for Distill.pub</h1>
 
-<p>The typical process of a Distill.pub article creation requires all contributors and editors to be familiar with version control (specifically Git) and web development, which sets an unnecessarily high barrier for entry to accept edits and suggestions from reviewers. This repository contains an article template and instructions for setting up a workflow based on Google Docs which exports the article html to GitHub. The workflow also uses a minimalistic Python web-server that automatically fetches new changes from GitHub and recompiles the article. We also provide a minimal Jekyll configuration that allows you to see changes live on GitHub Pages. </p>
+<p>The typical process of a Distill.pub article creation requires all contributors and editors to be familiar with version control (specifically Git) and web development, which sets an unnecessarily high barrier for entry to accept edits and suggestions from reviewers. This repository contains an article template and instructions for setting up a workflow based on Google Docs which exports the article html to GitHub. </p>
+
+<p>The workflow also uses a minimalistic Python web-server that automatically fetches new changes from GitHub and recompiles the article to serve the draft locally. We also provide a minimal Jekyll configuration that allows you to see changes live on GitHub Pages. </p>
+
+<p>To get started:</p>
 
 <ul><li>Fork and rename the <u>https:&#x2F;&#x2F;github.com&#x2F;znah&#x2F;gdocs_distill_template</u> repository. Repositories containing Distill.pub articles are by convention named &quot;post--<strong>canonicalized-article-name</strong>&quot;. </li>
-<li><strong>File -&gt; Make a copy </strong>Duplicate this Google Document for your article.</li>
+<li><strong>File -&gt; Make a copy </strong>to<strong> </strong>duplicate this Google Document for your article.<i> </i>This also duplicates the attached Google Script allowing export to GitHub.</li>
 <li>Update “github_repo” variable in above table to point to your GitHub repository.</li>
-<li>Click &quot;HTML Export&quot; -&gt; &quot;Run Export&quot;, provide a GitHub API key. </li>
-<li>See a live published on Google Docs.</li></ul>
-
-<p><strong>[OPTIONAL] </strong></p>
+<li>Click &quot;HTML Export&quot; -&gt; &quot;Run Export&quot;, provide a GitHub API key. </li></ul>
+<p></p>
+<figure>
+<!-- Format -> Paragraph Styles -> Subtitle -->
+<img src='export.png'>
+</figure>
+<ul><li>If GitHub Pages is enabled on your repository, navigate to &quot;<u>https:&#x2F;&#x2F;username.github.com&#x2F;post--canonicalized-article-name&#x2F;public</u>&quot; to see a live draft of the page. This draft typically updates within 30-40 seconds after running an export.</li></ul>
 
 <p>Alternatively you can install the script manually on an existing Google Doc.</p>
 
@@ -17,10 +24,13 @@
 <li>In the Script Editor tab replace the content of the “Code.gs” script with the code from “bin&#x2F;gdoc2html.gs”. You can also rename “Untitled project” into something meaningful.</li>
 <li>Go back to the document tab and reload it. The new “HTML Export” menu will appear.</li></ul>
 
-<p></p>
-<figure>
-<!-- Format -> Paragraph Styles -> Subtitle -->
-<img src='export.png'>
-</figure>
+<h3>Features</h3>
+
+<h4>Citations</h4>
+<p>To insert citations, edit the file &quot;<i>public&#x2F;bibliography.bib</i>&quot; and add citations in the BibTex format.  Then, in the text, simply insert a citation like this <d-cite key="mordvintsev_niklasson"></d-cite>. This will show up as a footnote with a bibliography at the end, placed using the &lt;d-citation-list&gt; section.</p>
 
 </d-article>
+<d-appendix>
+    <d-footnote-list></d-footnote-list>
+    <d-citation-list></d-citation-list>
+</d-appendix>
