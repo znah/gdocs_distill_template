@@ -9,7 +9,7 @@
 
 <ul><li>Fork and rename the <u>https:&#x2F;&#x2F;github.com&#x2F;znah&#x2F;gdocs_distill_template</u> repository. Repositories containing Distill.pub articles are by convention named &quot;post--<strong>canonicalized-article-name</strong>&quot;. </li>
 <li><strong>File -&gt; Make a copy </strong>to<strong> </strong>duplicate this Google Document for your article.<i> </i>This also duplicates the attached Google Script allowing export to GitHub.</li>
-<li>Update “github_repo” variable in above table to point to your GitHub repository.</li>
+<li>Update "github_repo" variable in above table to point to your GitHub repository.</li>
 <li>Click &quot;HTML Export&quot; -&gt; &quot;Run Export&quot;, provide a GitHub API key. </li></ul>
 <p></p>
 <figure width="300px">
@@ -21,14 +21,14 @@
 <h3>(Optional) Existing Google Doc</h3>
 <p>Alternatively you can install the script manually on an existing Google Doc.</p>
 
-<ul><li>Press Tools-&gt;Script Editor. The new “Apps Script” tab will open.</li>
-<li>In the Script Editor tab replace the content of the “Code.gs” script with the code from “bin&#x2F;gdoc2html.gs”. You can also rename “Untitled project” into something meaningful.</li>
-<li>Go back to the document tab and reload it. The new “HTML Export” menu will appear.</li></ul>
+<ul><li>Press Tools-&gt;Script Editor. The new "Apps Script" tab will open.</li>
+<li>In the Script Editor tab replace the content of the "Code.gs" script with the code from "bin&#x2F;gdoc2html.gs". You can also rename "Untitled project" into something meaningful.</li>
+<li>Go back to the document tab and reload it. The new "HTML Export" menu will appear.</li></ul>
 <h3>Features&#x2F;Usage</h3>
 <h4>Citations</h4>
 <p>To insert citations, edit the file &quot;<i>public&#x2F;bibliography.bib</i>&quot; and add citations in the BibTex format.  Then, in the text, simply insert a citation as can be seen in the Google Doc <d-cite key="mordvintsev_niklasson"></d-cite>. This will show up as a footnote with a bibliography at the end, placed using the &lt;d-citation-list&gt; section.</p>
 <h4>Colab Button</h4>
-<p>There is built in support for a &quot;Try in Colab&quot; button. To insert this, make sure you have the <i><strong>colab</i></strong> constant defined in the constants table in the doc. Then type <a href="https://colab.research.google.com/XYZ#scrollTo=abc" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a> to insert a link.</p>
+<p>There is built in support for a &quot;Try in Colab&quot; button. To insert this, make sure you have the <i><strong>colab</i></strong> constant defined in the constants table in the doc. Simple write <a href="https://colab.research.google.com/XYZ#scrollTo=abc" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a> to insert a link. This will be rendered as a link with a <i>scrollTo </i>the specified section of the colab.'</p>
 <h4>Inline HTML</h4>
 <p>Most special characters (for HTML) in the Google Doc are escaped (&lt;, &gt;, &#x2F;, …). However, you can add HTML inline to have it be exported as-is to the generated HTML in GitHub. To do so, simply mark it as having the <i>Subtitle</i> paragraph style in Google Docs. If you duplicated this template, we have adjusted the <i>Subtitle</i> paragraph style to be visually unobtrusive. If you are using your own document from scratch, the functionality will still work and you can alter the <i>Subtitle</i> paragraph style to look how you want. For an example of inline HTML in the Google Doc, see the below footer code (in the rendered page, you will see the bibliography).</p>
 
