@@ -1,12 +1,21 @@
 <d-article>
 <h1>A Minimalist Google Docs workflow for Distill.pub</h1>
 
-<p>The typical process of a Distill.pub article creation requires all contributors and editors to be familiar with version control (specifically Git) and web development, which sets an unnecessarily high barrier for entry to accept edits and suggestions from reviewers. This repository contains an article template and instructions for setting up a workflow based on Google Docs which exports the article html to GitHub. The workflow also uses a minimalistic Python web-server that automatically fetches new changes from GitHub and recompiles the article.</p>
+<p>The typical process of a Distill.pub article creation requires all contributors and editors to be familiar with version control (specifically Git) and web development, which sets an unnecessarily high barrier for entry to accept edits and suggestions from reviewers. This repository contains an article template and instructions for setting up a workflow based on Google Docs which exports the article html to GitHub. The workflow also uses a minimalistic Python web-server that automatically fetches new changes from GitHub and recompiles the article. We also provide a minimal Jekyll configuration that allows you to see changes live on GitHub Pages. </p>
 
 <ul><li>Fork and rename the <u>https:&#x2F;&#x2F;github.com&#x2F;znah&#x2F;gdocs_distill_template</u> repository.</li>
-<li>Make a copy of this Google Document for the article.</li>
+<li>Duplicate this Google Document for your article.</li>
 <li>Update “github_repo” variable in above table to point to your GitHub repository.</li>
-<li>Press Tools-&gt;Script Editor. The new “Apps Script” tab will open.</li>
+<li>Click &quot;HTML Export&quot; -&gt; &quot;Run Export&quot;, provide a GitHub API key. </li>
+</ul><li>See a live published article at </li>
+</ul></ul><ul><li>Test</li>
+<ul><ul><ul><ul><li>Hello</li>
+</ul></ul></ul><li>Test123</li>
+<ul><ul><ul><li>Test</li>
+</ul></ul><li>Woo</li></ul>
+
+<p>Alternatively you can install the script manually on an existing Google Doc.</p>
+<ul><li>[<strong>OPTIONAL] </strong>Press Tools-&gt;Script Editor. The new “Apps Script” tab will open.</li>
 <li>In the Script Editor tab replace the content of the “Code.gs” script with the code from “bin&#x2F;gdoc2html.gs”. You can also rename “Untitled project” into something meaningful.</li>
 <li>Go back to the document tab and reload it. The new “HTML Export” menu will appear.</li></ul>
 
