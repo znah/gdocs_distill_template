@@ -1,6 +1,26 @@
 var userProps = PropertiesService.getUserProperties(); 
 var ui = DocumentApp.getUi();
 var body = DocumentApp.getActiveDocument().getBody();
+var consts = parseConstants();
+
+// simple sanitize HTML from SO. for avoiding facepalm bugs and not for any sort of strict security.
+// https://stackoverflow.com/questions/24816/escaping-html-strings-with-jquery/12034334#12034334
+var entityMap = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+  '/': '&#x2F;',
+  '`': '&#x60;',
+  '=': '&#x3D;'
+};
+
+function escapeHtml (string) {
+  return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+    return entityMap[s];
+  });
+}
 
 function onOpen() {
   DocumentApp.getUi()
@@ -56,8 +76,6 @@ function parseConstants() {
 
 function ConvertGoogleDocToCleanHtml() {
 
-  var images = [];
-  var listCounters = {};
   var output = [];
   let foundStart = false;
   let consts = parseConstants();
@@ -67,11 +85,7 @@ function ConvertGoogleDocToCleanHtml() {
     foundStart |= (text == '<d-article>');
     if (!foundStart)
       continue;
-    if ((text[0] == '<' && text[text.length-1] == '>') || text.slice(0, 2) == "%%") {
-      output.push(text);
-    } else {
-      output.push(processItem(p, listCounters, images, consts));
-    }
+    output.push(processItem(p, consts, false));
   }
   var html = output.join('\n');
   var htmlb64 = Utilities.base64Encode(html, Utilities.Charset.UTF_8);
@@ -122,7 +136,7 @@ function dumpAttributes(atts) {
   }
 }
 
-function processItem(item, listCounters, images, consts) {
+function processItem(item, consts, isCode) {
   var output = [];
   var prefix = "", suffix = "";
   if (item.getType() == DocumentApp.ElementType.PARAGRAPH) {
@@ -142,6 +156,8 @@ function processItem(item, listCounters, images, consts) {
         prefix = "<h2 id='" + title + "'>", suffix = "</h2>"; break;
       case DocumentApp.ParagraphHeading.HEADING1:
         prefix = "<h1>", suffix = "</h1>"; break;
+      case DocumentApp.ParagraphHeading.SUBTITLE:
+        isCode = true; break;
       default: 
         prefix = "<p>", suffix = "</p>";
     }
@@ -161,26 +177,34 @@ function processItem(item, listCounters, images, consts) {
         }
       }
     }
-  }
-  else if (item.getType() == DocumentApp.ElementType.INLINE_IMAGE)
-  {
-    processImage(item, images, output, consts);
-  }
-  else if (item.getType() == DocumentApp.ElementType.INLINE_DRAWING)
-  {
-    processImage(item, images, output, consts);
   } else if (item.getType() == DocumentApp.ElementType.FOOTNOTE) {
     const text = processString(item.getFootnoteContents().getText());
-    output.push(`<d-footnote>${text}</d-footnote>`)
-  }  else if (item.getType()===DocumentApp.ElementType.LIST_ITEM) {
-    prefix = "<ul><li>";
-    suffix = "</li></ul>";
+    output.push("<d-footnote>" + text + "</d-footnote>");
+  } else if (item.getType()===DocumentApp.ElementType.LIST_ITEM) {
+    // check if we are already in a list
+    prefix = "<li>";
+    suffix = "</li>";
+    var textnow = item.getText();
+    // case when starting a list
+    if (!item.getPreviousSibling() || item.getPreviousSibling().getType() != DocumentApp.ElementType.LIST_ITEM) {
+      prefix = "<ul>".repeat(item.getNestingLevel() + 1) + prefix;
+    }
+    
+    // add sufficient new lists or end sufficient lists to match the next nesting level
+    var postDiffLevel = (!item.getNextSibling() || item.getNextSibling().getType() != DocumentApp.ElementType.LIST_ITEM) ? 
+      (item.getNestingLevel() + 1) : (item.getNestingLevel() - item.getNextSibling().getNestingLevel());
+    
+    if (postDiffLevel > 0) {
+        suffix = suffix + "</ul>".repeat(postDiffLevel);
+    } else {
+        suffix = suffix + "<ul>".repeat(-postDiffLevel);
+    }
   }
 
   output.push(prefix);
 
   if (item.getType() == DocumentApp.ElementType.TEXT) {
-    processText(item, output);
+     processText(item, output, isCode);
   }
   else {
     if (item.getNumChildren) {
@@ -189,7 +213,7 @@ function processItem(item, listCounters, images, consts) {
       // Walk through all the child elements of the doc.
       for (var i = 0; i < numChildren; i++) {
         var child = item.getChild(i);
-        output.push(processItem(child, listCounters, images, consts));
+        output.push(processItem(child, consts, isCode));
       }
     }
 
@@ -200,13 +224,21 @@ function processItem(item, listCounters, images, consts) {
 }
 
 function processString(s) {
+  //remove smart quotes if they are enabled
+  s = s.replace(/(‘|’)/g, "'");
+  s = s.replace(/(“|”)/g, '"');
   s = s.replace(/\[\[([^\[\]]+)\]\]/g, '<d-cite key="$1"></d-cite>');
+  if ("colab" in consts) { 
+    var colablink = "<a href=\"" + consts['colab'] + "#scrollTo=$1\" class=\"colab-root\">Reproduce in a <span class=\"colab-span\">Notebook</span></a>";
+    s = s.replace(/colab\(([a-zA-Z0-9_-]+)\)/gm, colablink);
+  };
   return s;
 }
 
-function processText(item, output) {
+function processText(item, output, isCode) {
   var text = item.getText();
   var indices = item.getTextAttributeIndices();
+  var inLink = false;
 
   for (var i=0; i < indices.length; i ++) {
     var partAtts = item.getAttributes(indices[i]);
@@ -214,18 +246,32 @@ function processText(item, output) {
     var endPos = i+1 < indices.length ? indices[i+1]: text.length;
     var partText = text.substring(startPos, endPos);
 
+    if (!inLink && partAtts.LINK_URL) {
+      //beggining of link
+      inLink = true;
+      output.push("<a href='" + partAtts.LINK_URL + "'>");
+    }
+    if (inLink && !partAtts.LINK_URL){
+      //end of link
+      inLink = false;
+      output.push("</a>");
+    }
     if (partAtts.ITALIC) {
       output.push('<i>');
     }
     if (partAtts.BOLD) {
       output.push('<strong>');
     }
-    if (partAtts.UNDERLINE) {
+    if (partAtts.UNDERLINE && !partAtts.LINK_URL) {
       output.push('<u>');
     }
 
-    // process citations
-    output.push(processString(partText));
+    // process citations and colab
+    if (isCode) {
+      output.push(processString(partText));
+    } else {
+      output.push(processString(escapeHtml(partText)));
+    }
 
     if (partAtts.ITALIC) {
       output.push('</i>');
@@ -233,20 +279,8 @@ function processText(item, output) {
     if (partAtts.BOLD) {
       output.push('</strong>');
     }
-    if (partAtts.UNDERLINE) {
+    if (partAtts.UNDERLINE && !partAtts.LINK_URL) {
       output.push('</u>');
     }
-  }
-}
-
-function processImage(item, images, output, consts) {
-  var description = item.getAltDescription();
-  if (description) {
-    //Descriptions of images including colab(XYZ) will insert a link directly to section XYZ of the colab (i.e. COLAB_URL#scrollTo=XYZ).
-    if ("colab" in consts) { 
-      var colablink = "<a href=\"" + consts['colab'] + "#scrollTo=$1\" class=\"colab-root\">Reproduce in a <span class=\"colab-span\">Notebook</span></a>";
-      description = description.replace(/colab\(([a-zA-Z0-9_-]+)\)/gm, colablink);
-    };
-    output.push(description);
   }
 }
