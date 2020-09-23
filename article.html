@@ -1,9 +1,11 @@
 <d-article>
 <h1>A Minimalist Google Docs workflow for Distill.pub</h1>
 
-<p>The typical process of a Distill.pub article creation requires all contributors and editors to be familiar with version control (specifically Git) and web development, which sets an unnecessarily high barrier for entry to accept edits and suggestions from reviewers. This repository contains an article template and instructions for setting up a workflow based on Google Docs which exports the article html to GitHub. </p>
+<p>The typical process of a Distill.pub article creation requires all contributors and editors to be familiar with version control (specifically Git) and web development, which sets an unnecessarily high barrier for entry to accept edits and suggestions from reviewers. This repository contains an article template and instructions for setting up a workflow based on Google Docs which exports the article HTML to GitHub. </p>
 
 <p>The workflow also uses a minimalistic Python web-server that automatically fetches new changes from GitHub and recompiles the article to serve the draft locally. We also provide a minimal Jekyll configuration that allows you to see changes live on GitHub Pages. </p>
+
+<p>It was organically developed while writing our first Distill article <d-cite key="mordvintsev2020growing"></d-cite> and noticing that we really needed the collaborative functionality of Google Docs, but wanted a live preview of our article while working.</p>
 <h2 id='getting-started'>Getting Started</h2>
 
 <ul><li>Fork and rename the <a href='https://github.com/znah/gdocs_distill_template'>https:&#x2F;&#x2F;github.com&#x2F;znah&#x2F;gdocs_distill_template</a> repository. Convention is to name it &quot;post--<i>canonicalized-article-name</i>&quot;. </li>
@@ -30,7 +32,9 @@
 <h3>Colab Button</h3>
 <p>There is built in support for a &quot;Try in Colab&quot; button. To insert this, make sure you have the <i><strong>colab</i></strong> constant defined in the constants table in the doc. Simple write </p>
 <p><a href="https://colab.research.google.com/github/google-research/self-organising-systems/blob/master/notebooks/growing_ca.ipynb#scrollTo=lyxeGm6dJX8D" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a> </p>
-<p>to insert a link. This will be rendered as a link with a <i>scrollTo </i>the specified section of the colab.</p>
+<p>to insert a colab link. This will be rendered as a link with a <i>scrollTo </i>the specified section of the colab.</p>
+<h3>Hyperlinks</h3>
+<p>The export script respects hyperlinks and hyperlinked text in Google Docs, and faithfully reproduces it in the rendered HTML.</p>
 <h3>Smart Quotes</h3>
 <p>By default Google Docs uses &quot;smart quotes&quot; (UTF-8 quotes which differ based on whether they are at the beginning or end of a phrase). This does not play well with HTML. The export script replaces these quotes with the standard ASCII double and single quotes.</p>
 <h3>Inline HTML</h3>
