@@ -1,13 +1,56 @@
 <d-article>
-<h1>A Minimalist Google Docs workflow for Distill.pub</h1>
-<p>The typical process of a Distill.pub article creation requires all contributors and editors to be familiar with version control (specifically Git) and web development, which sets an unnecessarily high barrier for entry to accept edits and suggestions from reviewers. This repository contains an article template and instructions for setting up a workflow based on Google Docs which exports the article html to GitHub. The workflow also uses a minimalistic Python web-server that automatically fetches new changes from GitHub and recompiles the article.</p>
+<h1>A Minimalist Google Docs Workflow for Distill.pub</h1>
 
-<ul><li>Fork and rename the <u>https://github.com/znah/gdocs_distill_template</u> repository</li></ul>
-<ul><li>Create a new Google Document for the article</li></ul>
-<ul><li>Press Tools->Script Editor. The new “Apps Script” tab will open</li></ul>
-<ul><li>In the Script Editor tab replace the content of the “Code.gs” script with the code from “bin/gdoc2html.gs”. You can also rename “Untitled project” into something meaningful.</li></ul>
-<ul><li>Go back to the document tab and reload it. The new “HTML Export” menu will appear.</li></ul>
+<p>The typical process of a Distill.pub article creation requires all contributors and editors to be familiar with version control (specifically Git) and web development, which sets an unnecessarily high barrier for entry to accept edits and suggestions from reviewers. This repository contains an article template and instructions for setting up a workflow based on Google Docs which exports the article HTML to GitHub. </p>
 
+<p>The workflow also uses a minimalistic Python web-server that automatically fetches new changes from GitHub and recompiles the article to serve the draft locally. We also provide a minimal Jekyll configuration that allows you to see changes live on GitHub Pages. </p>
+
+<p>It was organically developed while writing our first Distill article <d-cite key="mordvintsev2020growing"></d-cite> and noticing that we really needed the collaborative functionality of Google Docs, but wanted a live preview of our article while working.</p>
+<h2 id='getting-started'>Getting Started</h2>
+
+<ul><li>Fork and rename the <a href='https://github.com/znah/gdocs_distill_template'>https:&#x2F;&#x2F;github.com&#x2F;znah&#x2F;gdocs_distill_template</a> repository. Convention is to name it &quot;post--<i>canonicalized-article-name</i>&quot;. </li>
+<li>Duplicate this Google Document for your article.<i> </i>This also duplicates the attached Google Script allowing export to GitHub.</li>
+<li>Update <i>github_repo</i> variable in above table to point to your GitHub repository.</li>
+<li>Click &quot;HTML Export&quot; -&gt; &quot;Run Export&quot;. You will be prompted for a GitHub API token the first time you run this. This is privately stored for your Google account and not accessible by anyone else opening the Google Doc. Give the key "repo" permissions. Get the key <a href='https://github.com/settings/tokens'>here</a>.</li></ul>
 <p></p>
+<figure width="300px">
+<img src='export.png' style='width: 500px'>
+<figcaption>A sample image demonstrating how to export html to GitHub.</figcaption>
+</figure>
+<ul><li>Enable GitHub pages for the repository under <i>Settings</i>, if not already enabled. </li>
+<li>Update the <i>password</i><i><strong> </i></strong>parameter in main.html to a password of your choosing. The default password is <strong>selforgtheworld</strong>.</li>
+<li>Navigate to <i>https:&#x2F;&#x2F;username.github.com&#x2F;post--canonicalized-article-name&#x2F;public</i> to see a live draft of the page. This draft typically updates within 30-40 seconds after running an export. The link to the rendered version of this tutorial is <a href='https://eyvind.me/gdocs_distill_template/public/'>here</a><strong>.</strong></li></ul>
+
+<h2 id='optional-adding'>(Optional) Adding to Existing Google Doc</h2>
+<p>Alternatively you can install the script manually on an existing Google Doc.</p>
+
+<ul><li>Press Tools-&gt;Script Editor. The new "Apps Script" tab will open.</li>
+<li>In the Script Editor tab replace the content of the "Code.gs" script with the code from "bin&#x2F;gdoc2html.gs". You can also rename "Untitled project" into something meaningful.</li>
+<li>Go back to the document tab and reload it. The new "HTML Export" menu will appear.</li></ul>
+<h2 id='features'>Features</h2>
+<h3>Citations</h3>
+<p>To insert citations, edit the file &quot;<i>public&#x2F;bibliography.bib</i>&quot; and add citations in the BibTex format.  Then, in the text, simply insert a citation as can be seen in the Google Doc <d-cite key="mordvintsev_niklasson"></d-cite>. This will show up as a footnote with a bibliography at the end, placed using the &lt;d-citation-list&gt; section.</p>
+<h3>Colab Button</h3>
+<p>There is built in support for a &quot;Try in Colab&quot; button. To insert this, make sure you have the <i><strong>colab</i></strong> constant defined in the constants table in the doc. Simple write </p>
+<p><a href="https://colab.research.google.com/github/google-research/self-organising-systems/blob/master/notebooks/growing_ca.ipynb#scrollTo=lyxeGm6dJX8D" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a> </p>
+<p>to insert a colab link. This will be rendered as a link with a <i>scrollTo </i>the specified section of the colab.</p>
+<h3>Hyperlinks</h3>
+<p>The export script respects hyperlinks and hyperlinked text in Google Docs, and faithfully reproduces it in the rendered HTML.</p>
+<h3>Smart Quotes</h3>
+<p>By default Google Docs uses &quot;smart quotes&quot; (UTF-8 quotes which differ based on whether they are at the beginning or end of a phrase). This does not play well with HTML. The export script replaces these quotes with the standard ASCII double and single quotes.</p>
+
+<h3>Lists and sublists</h3>
+<ul><li>The script faithfully reproduces lists as HTML lists. </li><ul>
+<li>It respects nesting.</li><ul><ul><ul>
+<li>Even discontinuous nesting</li></ul></ul></ul></ul>
+<li>To change the appearance of the HTML lists, please edit the stylesheet.</li></ul>
+<h3>Latex</h3>
+<p>The underlying Distill template has Latex compilation enabled. To insert equations, simply wrap them as follows: $\vec{x} &gt; \vec{y} \forall \vec{y}$.</p>
+<h3>Custom HTML</h3>
+<p>Most special characters (for HTML) in the Google Doc are escaped (&lt;, &gt;, &#x2F;, …). However, you can add HTML to have it be exported as-is to the generated HTML in GitHub. To do so, simply mark it as having the <i>Subtitle</i> paragraph style in Google Docs. If you duplicated this template, we have adjusted the <i>Subtitle</i> paragraph style to be visually unobtrusive. If you are using your own document from scratch, the functionality will still work and you can alter the <i>Subtitle</i> paragraph style to look how you want. For an example of inline HTML in the Google Doc, see the below footer code (in the rendered page, you will see the bibliography).</p>
 
 </d-article>
+<d-appendix>
+    <d-footnote-list></d-footnote-list>
+    <d-citation-list></d-citation-list>
+</d-appendix>
