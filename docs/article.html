@@ -43,7 +43,6 @@
 <p>The export script respects hyperlinks and hyperlinked text in Google Docs, and faithfully reproduces it in the rendered HTML.</p>
 <h3>Smart Quotes</h3>
 <p>By default Google Docs uses &quot;smart quotes&quot; (UTF-8 quotes which differ based on whether they are at the beginning or end of a phrase). This does not play well with HTML. The export script replaces these quotes with the standard ASCII double and single quotes.</p>
-
 <h3>Lists and sublists</h3>
 <ul><li>The script faithfully reproduces lists as HTML lists. </li><ul>
 <li>It respects nesting.</li><ul><ul><ul>
@@ -54,6 +53,26 @@
 <h3>Custom HTML</h3>
 <p>Most special characters (for HTML) in the Google Doc are escaped (&lt;, &gt;, &#x2F;, …). However, you can add HTML to have it be exported as-is to the generated HTML in GitHub. To do so, simply mark it as having the <i>Subtitle</i> paragraph style in Google Docs. If you duplicated this template, we have adjusted the <i>Subtitle</i> paragraph style to be visually unobtrusive. If you are using your own document from scratch, the functionality will still work and you can alter the <i>Subtitle</i> paragraph style to look how you want. For an example of inline HTML in the Google Doc, see the below footer code (in the rendered page, you will see the bibliography).</p>
 
+<h3>Videos</h3>
+<p>There is some simple boilerplate to add videos with an overlaid &quot;play&quot; button in the template. Feel free to customize this, but for a simple video use the following HTML snippet. Customize the &quot;#t&#x3D;x.x&quot; to change the preview image for the video (prior to playing) to a specific time in the video, and customize the "src" attribute to choose the video.</p>
+
+<p></p>
+<figure>
+  <div class="vc">
+    <div class="vidoverlay"></div>
+      <video playsinline muted width="300px" preload="auto">
+        <source src="grid.mov#t=0.3" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+  </div>
+  <figcaption>
+Example of an inline video.
+  </figcaption>
+</figure>
+<h3>Apps Script Changelog</h3>
+<ul><li>16&#x2F;01&#x2F;2021</li><ul>
+<li>Allow links in footnotes.</li>
+<li>Fix URI fragment generation (longer fragments for uniqueness + fixed bug) </li></ul></ul>
 </d-article>
 <d-appendix>
     <d-footnote-list></d-footnote-list>
