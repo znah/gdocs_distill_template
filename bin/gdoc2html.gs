@@ -1,5 +1,4 @@
 var userProps = PropertiesService.getUserProperties(); 
-var ui = DocumentApp.getUi();
 var body = DocumentApp.getActiveDocument().getBody();
 var consts = parseConstants();
 
@@ -16,21 +15,41 @@ var entityMap = {
   '=': '&#x3D;'
 };
 
+var inverseEntityMap = {
+  '&amp;' : '&',
+  '&lt;' : '<',
+  '&gt;' : '>',
+  '&quot;' : '"',
+  '&#39;' : "'",
+  '&#x2F;' : '/',
+  '&#x60;': '`',
+  '&#x3D;' : '='
+};
+
 function escapeHtml (string) {
   return String(string).replace(/[&<>"'`=\/]/g, function (s) {
     return entityMap[s];
   });
 }
 
+function unEscapeHtml (string) {
+  return String(string).replace(/&[a-z0-9#A-Z]*;/g, function (s) {
+    return inverseEntityMap[s];
+  });
+}
+
+
 function onOpen() {
   DocumentApp.getUi()
       .createMenu('HTML Export')
       .addItem('Set GitHub API key', 'setApiKey')
       .addItem('Run Export', 'ConvertGoogleDocToCleanHtml')
+      .addItem('Download HTML', 'DownloadHTML')
       .addToUi();
 }
 
 function setApiKey(){
+  const ui = DocumentApp.getUi();
   var response = ui.prompt('Please copy and paste a personal access token from "https://github.com/settings/tokens"');
   if (response.getSelectedButton() == ui.Button.OK) {
     userProps.setProperty('apikey', response.getResponseText());
@@ -73,13 +92,12 @@ function parseConstants() {
   return consts;
 }  
 
-
-function ConvertGoogleDocToCleanHtml() {
-
+function GenerateHTML() {
   var output = [];
   let foundStart = false;
-  let consts = parseConstants();
-  for (let i=0; i<body.getNumChildren(); ++i) {
+  const consts = parseConstants();
+  const n = body.getNumChildren();
+  for (let i=0; i<n; ++i) {
     const p = body.getChild(i);
     const text = p.getText().trim();
     foundStart |= (text == '<d-article>');
@@ -87,7 +105,31 @@ function ConvertGoogleDocToCleanHtml() {
       continue;
     output.push(processItem(p, consts, false));
   }
-  var html = output.join('\n');
+  const html = output.join('\n');
+  return html;
+}
+
+function DownloadHTML() {
+  const htmlOutput = HtmlService
+    .createHtmlOutput(`
+    <script>
+    function buttonclicked() {
+      const status = document.getElementById('status');
+      status.innerText = 'exporting...';
+      google.script.run.withSuccessHandler(html=>{
+        navigator.clipboard.writeText(html).then(()=>{
+          status.innerText = 'done';
+        });
+      }).GenerateHTML();
+    }
+    </script>
+    <button onclick='buttonclicked();'>Copy</button><p id="status"></p>`)
+    .setTitle('HTML Export');
+  DocumentApp.getUi().showSidebar(htmlOutput);
+}
+
+function ConvertGoogleDocToCleanHtml() {
+  const html = GenerateHTML();
   var htmlb64 = Utilities.base64Encode(html, Utilities.Charset.UTF_8);
   
   //Check for saved GitHub url and token, else prompt for it.  
@@ -140,26 +182,26 @@ function processItem(item, consts, isCode) {
   var output = [];
   var prefix = "", suffix = "";
   if (item.getType() == DocumentApp.ElementType.PARAGRAPH) {
+    var title = ""
+    title = item.getText();
+    title = title.replace(/[^A-Za-z0-9 ']/g, "").toLowerCase().split(" ").join("-");
     switch (item.getHeading()) {
       case DocumentApp.ParagraphHeading.HEADING6: 
-        prefix = "<h6>", suffix = "</h6>"; break;
+        prefix = "<h6 id='" + title + "'>", suffix = "</h6>"; break;
       case DocumentApp.ParagraphHeading.HEADING5: 
-        prefix = "<h5>", suffix = "</h5>"; break;
+        prefix = "<h5 id='" + title + "'>", suffix = "</h5>"; break;
       case DocumentApp.ParagraphHeading.HEADING4:
-        prefix = "<h4>", suffix = "</h4>"; break;
+        prefix = "<h4 id='" + title + "'>", suffix = "</h4>"; break;
       case DocumentApp.ParagraphHeading.HEADING3:
-        prefix = "<h3>", suffix = "</h3>"; break;
+        prefix = "<h3 id='" + title + "'>", suffix = "</h3>"; break;
       case DocumentApp.ParagraphHeading.HEADING2:
-        var title = ""
-        title = item.getText();
-        title = title.replace(/[^A-Za-z0-9 ']/g, "").toLowerCase().split(" ").slice(0, 2).join("-");
         prefix = "<h2 id='" + title + "'>", suffix = "</h2>"; break;
       case DocumentApp.ParagraphHeading.HEADING1:
         prefix = "<h1>", suffix = "</h1>"; break;
       case DocumentApp.ParagraphHeading.SUBTITLE:
         isCode = true; break;
       default: 
-        prefix = "<p>", suffix = "</p>";
+       prefix = "<p>", suffix = "</p>";
     }
 
     if (item.getNumChildren() == 0)
@@ -178,8 +220,14 @@ function processItem(item, consts, isCode) {
       }
     }
   } else if (item.getType() == DocumentApp.ElementType.FOOTNOTE) {
-    const text = processString(item.getFootnoteContents().getText());
-    output.push("<d-footnote>" + text + "</d-footnote>");
+    prefix = "<d-footnote>";
+    suffix = "</d-footnote>";
+    // TODO(eyvind@): footnotes in the distill template don't support nested paragraphs. 
+    // so we hope it's a short footnote, and take the first one as a quick and dirty hack.
+    item = item.getFootnoteContents().getParagraphs()[0];
+    //output.push("<d-footnote>");
+    //processText(item.getFootnoteContents().editAsText(), output, false);
+    //output.push("</d-footnote>");
   } else if (item.getType()===DocumentApp.ElementType.LIST_ITEM) {
     // check if we are already in a list
     prefix = "<li>";
@@ -200,11 +248,8 @@ function processItem(item, consts, isCode) {
         suffix = suffix + "<ul>".repeat(-postDiffLevel);
     }
   }
-
-  output.push(prefix);
-
   if (item.getType() == DocumentApp.ElementType.TEXT) {
-     processText(item, output, isCode);
+    processText(item, output, isCode);
   }
   else {
     if (item.getNumChildren) {
@@ -216,11 +261,12 @@ function processItem(item, consts, isCode) {
         output.push(processItem(child, consts, isCode));
       }
     }
-
   }
-
-  output.push(suffix);
-  return output.join('');
+  output = output.join('');
+  if (output.length == 0) {
+    return "";
+  }
+  return prefix + output + suffix;
 }
 
 function processString(s) {
@@ -229,22 +275,35 @@ function processString(s) {
   s = s.replace(/(“|”)/g, '"');
   s = s.replace(/\[\[([^\[\]]+)\]\]/g, '<d-cite key="$1"></d-cite>');
   if ("colab" in consts) { 
-    var colablink = "<a href=\"" + consts['colab'] + "#scrollTo=$1\" class=\"colab-root\">Reproduce in a <span class=\"colab-span\">Notebook</span></a>";
+    var colablink = "<a href=\"" + consts['colab'] + "#scrollTo=$1\" target=\"_blank\" class=\"colab-root\">Reproduce in a <span class=\"colab-span\">Notebook</span></a>";
     s = s.replace(/colab\(([a-zA-Z0-9_-]+)\)/gm, colablink);
   };
+
+  function replacer(match, p1, p2, offset, string, groups) {
+    var colablink = `<a href="` + unEscapeHtml(p1) + `" class="colab-root"><span class="colab-span">` + p2 + `</span></a>`;
+    return colablink;
+  }
+  s = s.replace(/colablink\(([a-zA-Z0-9_\-@:;&%._\+~#=\/]+),([a-zA-Z0-9 ]+)\)/gm, replacer);
+
   return s;
 }
 
 function processText(item, output, isCode) {
-  var text = item.getText();
+  const text = item.getText();
+  if (isCode) {
+    output.push(processString(text));
+    return;
+  }
+
   var indices = item.getTextAttributeIndices();
   var inLink = false;
 
   for (var i=0; i < indices.length; i ++) {
-    var partAtts = item.getAttributes(indices[i]);
-    var startPos = indices[i];
-    var endPos = i+1 < indices.length ? indices[i+1]: text.length;
-    var partText = text.substring(startPos, endPos);
+    const startPos = indices[i];
+    const endPos = i+1 < indices.length ? indices[i+1]: text.length;
+    const partText = text.substring(startPos, endPos);
+    const partAtts = item.getAttributes(startPos);
+    const font = item.getFontFamily(startPos);
 
     if (!inLink && partAtts.LINK_URL) {
       //beggining of link
@@ -265,12 +324,14 @@ function processText(item, output, isCode) {
     if (partAtts.UNDERLINE && !partAtts.LINK_URL) {
       output.push('<u>');
     }
+    if (font == 'Consolas') {
+      output.push('<code>');
+    }
+    
+    output.push(processString(escapeHtml(partText)));
 
-    // process citations and colab
-    if (isCode) {
-      output.push(processString(partText));
-    } else {
-      output.push(processString(escapeHtml(partText)));
+    if (font == 'Consolas') {
+      output.push('</code>');
     }
 
     if (partAtts.ITALIC) {
