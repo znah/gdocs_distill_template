@@ -1,13 +1,9 @@
 '''Advanced web-development server'''
 
-from __future__ import print_function
-
-import os, glob
-import six
-if six.PY3:
-    from http.server import SimpleHTTPRequestHandler, test
-else:
-    from SimpleHTTPServer import SimpleHTTPRequestHandler, test
+import os
+import io
+from http.server import SimpleHTTPRequestHandler, test
+from http import HTTPStatus
 import re
 
 def copy_byte_range(infile, outfile, start=None, stop=None, bufsize=16*1024):
@@ -41,37 +37,35 @@ def parse_byte_range(byte_range):
     return first, last
 
 def write_file(fname, fout):
+    skipping_jekyl_meta = False
     for s in open(fname):
+        if s.strip() == '---':
+            skipping_jekyl_meta = not skipping_jekyl_meta
+            continue
+        if skipping_jekyl_meta:
+            continue
+
         if s.strip().startswith('{% include '):
-            fn = '../'+s.split()[2]
+            fn = s.split()[2]
             write_file(fn, fout)
         else:
             fout.write(s)
-
-def build():
-    if os.environ.get("GIT_API_KEY_SELFORG") is not None:
-        print("using api key in environment")
-        os.system('''curl -o ../article.html \
-        --header 'Authorization: token ''' + os.environ.get("GIT_API_KEY_SELFORG") + '''' \
-        --header 'Accept: application/vnd.github.v3.raw' \
-        --location https://api.github.com/repos/$(git remote -v | head -n 1 | sed 's/.*github\.com:\(.*\)\.git.*/\\1/')/contents/article.html \
-        ''')
-    else:
-        print("no api key available")
-    with open('index.html', 'w') as fout:
-      write_file('../main.html', fout)
-    print('build finished')
 
 
 class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         if self.path in ['/', '/index.html']:
-            build()
-        if six.PY3:
-            super().do_GET()
+            fout = io.StringIO()
+            write_file('index.html', fout)
+            bdata = bytes(fout.getvalue(), 'utf-8')
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-type", 'text/html')
+            self.send_header("Content-Length", str(len(bdata)))
+            self.end_headers()      
+            self.wfile.write(bdata)
         else:
-            SimpleHTTPRequestHandler.do_GET(self)
+            super().do_GET()
 
     # From https://github.com/danvk/RangeHTTPServer.
     # Safari requires Range to be supported for video files.
@@ -128,6 +122,5 @@ class Handler(SimpleHTTPRequestHandler):
     
 
 if __name__ == '__main__':
-    os.chdir('public')
-    build()
+    os.chdir('docs')
     test(HandlerClass=Handler)

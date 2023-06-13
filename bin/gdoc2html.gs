@@ -49,7 +49,7 @@ function checkAndParseGitURL(consts){
   } else {
     var canonMatch = /https:\/\/github.com\/(.*?)\/(.*?)\/?$/;
     if (!canonMatch.test(github_repo)) { throw new Error("Unrecognized repository URL."); };
-    github_repo = github_repo.replace(canonMatch, "https://api.github.com/repos/$1/$2/contents/article.html");
+    github_repo = github_repo.replace(canonMatch, "https://api.github.com/repos/$1/$2/contents/docs/article.html");
   }
   consts["github_repo"] = github_repo;
   return consts;
